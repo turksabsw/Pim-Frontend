@@ -7,6 +7,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 
 const props = withDefaults(
   defineProps<{
@@ -30,6 +31,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 
 const searchQuery = ref('')
 const showUserMenu = ref(false)
@@ -94,12 +96,8 @@ function closeUserMenu(): void {
   showUserMenu.value = false
 }
 
-async function handleLogout(): Promise<void> {
-  try {
-    await fetch('/api/method/logout', { method: 'POST', credentials: 'include' })
-  } finally {
-    window.location.href = '/login'
-  }
+function handleLogout(): void {
+  authStore.logout()
 }
 </script>
 

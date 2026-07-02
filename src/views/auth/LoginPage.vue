@@ -47,7 +47,6 @@ async function handleRegister(): Promise<void> {
   loading.value = true
   try {
     await authStore.register(email.value, fullName.value)
-    info.value = 'Hesabın oluşturuldu. E-postana gönderilen bağlantıyla doğrula, sonra giriş yap.'
     switchTab('login')
     info.value = 'Hesabın oluşturuldu. E-postana gönderilen bağlantıyla doğrula, sonra giriş yap.'
   } catch (e) {

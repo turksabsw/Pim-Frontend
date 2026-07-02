@@ -56,7 +56,12 @@ function createFrappeAxios(): AxiosInstance {
     (response) => response,
     (error: AxiosError) => {
       const status = error.response?.status
-      if (status === 401 || status === 403) {
+      const data = error.response?.data as Record<string, unknown> | undefined
+      const isAuthFailure =
+        status === 401 ||
+        (status === 403 &&
+          (data?.exc_type === 'AuthenticationError' || data?.session_expired === true))
+      if (isAuthFailure) {
         clearStoredToken()
         if (window.location.pathname !== '/login') {
           window.location.href = '/login'
