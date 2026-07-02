@@ -13,24 +13,24 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8090',
+        target: 'https://pimcronbi.cronbi.com',
         changeOrigin: true,
-        cookieDomainRewrite: { '*': '' },
+        secure: true,
       },
       '/logout': {
-        target: 'http://localhost:8090',
+        target: 'https://pimcronbi.cronbi.com',
         changeOrigin: true,
-        cookieDomainRewrite: { '*': '' },
+        secure: true,
       },
       '/files': {
-        target: 'http://localhost:8090',
+        target: 'https://pimcronbi.cronbi.com',
         changeOrigin: true,
-        cookieDomainRewrite: { '*': '' },
+        secure: true,
       },
       '/private': {
-        target: 'http://localhost:8090',
+        target: 'https://pimcronbi.cronbi.com',
         changeOrigin: true,
-        cookieDomainRewrite: { '*': '' },
+        secure: true,
       },
     },
   },
