@@ -24,105 +24,44 @@ import type {
   FrappeListParams,
   APIError,
 } from '@/types'
-
-// ============================================================================
-// CSRF Token Management
-// ============================================================================
-
-/** Cached CSRF token - shared across all composable instances */
-let _csrfToken: string | null = null
-
-/**
- * Get the CSRF token from cookies or meta tag.
- * Frappe stores the token in a cookie named 'csrf_token'
- * or in a meta tag in the HTML head.
- */
-function getCSRFToken(): string {
-  if (_csrfToken) {
-    return _csrfToken
-  }
-
-  // Try cookie first (standard Frappe approach)
-  const cookieMatch = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith('csrf_token='))
-  if (cookieMatch) {
-    _csrfToken = decodeURIComponent(cookieMatch.split('=')[1])
-    return _csrfToken
-  }
-
-  // Fallback: try meta tag
-  const metaTag = document.querySelector('meta[name="csrf_token"]')
-  if (metaTag) {
-    _csrfToken = metaTag.getAttribute('content') || ''
-    return _csrfToken
-  }
-
-  // Fallback: try window.__frappe_csrf_token (set by some Frappe pages)
-  const win = window as unknown as Record<string, unknown>
-  if (typeof win.__frappe_csrf_token === 'string') {
-    _csrfToken = win.__frappe_csrf_token
-    return _csrfToken
-  }
-
-  return ''
-}
-
-/** Clear the cached CSRF token (e.g., after logout) */
-export function clearCSRFToken(): void {
-  _csrfToken = null
-}
+import { API_BASE_URL } from '@/config/api'
+import { authHeader, clearStoredToken } from '@/config/authToken'
 
 // ============================================================================
 // Axios Instance
 // ============================================================================
 
-/** Create a configured axios instance for Frappe API calls */
 function createFrappeAxios(): AxiosInstance {
   const instance = axios.create({
-    baseURL: '/',
+    baseURL: API_BASE_URL || '/',
     timeout: 30000,
-    withCredentials: true,
+    withCredentials: false,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
   })
 
-  // Request interceptor: attach CSRF token
+  // Request interceptor: attach the token auth header when logged in.
   instance.interceptors.request.use((config) => {
-    const token = getCSRFToken()
-    if (token) {
-      config.headers['X-Frappe-CSRF-Token'] = token
+    const header = authHeader()
+    if (header) {
+      config.headers['Authorization'] = header
     }
     return config
   })
 
-  // Response interceptor: handle common errors
+  // Response interceptor: on auth failure, drop the token and go to login.
   instance.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
-      // If CSRF token expired, clear cache and retry once
-      if (error.response?.status === 403) {
-        const data = error.response.data as Record<string, unknown> | undefined
-        if (data?.exc_type === 'CSRFTokenError') {
-          clearCSRFToken()
-        }
-      }
-
-      // If unauthorized, redirect to login
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        const data = error.response.data as Record<string, unknown> | undefined
-        if (
-          data?.session_expired ||
-          data?.exc_type === 'AuthenticationError' ||
-          data?.exc_type === 'PermissionError'
-        ) {
+      const status = error.response?.status
+      if (status === 401 || status === 403) {
+        clearStoredToken()
+        if (window.location.pathname !== '/login') {
           window.location.href = '/login'
-          return Promise.reject(error)
         }
       }
-
       return Promise.reject(error)
     },
   )
