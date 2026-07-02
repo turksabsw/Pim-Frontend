@@ -2,7 +2,7 @@
  * Frappe REST API composable for Vue.js 3.
  *
  * Provides reactive wrappers around Frappe's REST API with:
- * - Automatic CSRF token management
+ * - Automatic token-based authentication (Authorization header)
  * - Authentication state detection
  * - Loading and error states via Vue refs
  * - Typed document CRUD operations
@@ -184,7 +184,7 @@ export interface UseFrappeAPIReturn {
  *
  * Provides reactive loading/error state and typed API methods.
  * Each composable instance has its own loading/error state,
- * but shares the same axios instance and CSRF token.
+ * but shares the same axios instance and auth token.
  *
  * @example
  * ```ts
@@ -461,7 +461,7 @@ export function useFrappeAPI(): UseFrappeAPIReturn {
   /**
    * Make a raw API request for advanced use cases.
    *
-   * CSRF token and credentials are automatically included.
+   * The Authorization token header is automatically included.
    */
   async function request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
     return withTracking(async () => {

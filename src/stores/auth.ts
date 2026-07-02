@@ -33,8 +33,9 @@ export const useAuthStore = defineStore('auth', () => {
   const { callMethod } = useFrappeAPI()
 
   const user = ref<AuthUser | null>(null)
+  const token = ref<AuthToken | null>(getStoredToken())
 
-  const isAuthenticated = computed(() => getStoredToken() !== null)
+  const isAuthenticated = computed(() => token.value !== null)
 
   async function login(usr: string, pwd: string): Promise<void> {
     const res = await callMethod<LoginResponse>(
@@ -42,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
       { usr, pwd },
     )
     setStoredToken({ api_key: res.api_key, api_secret: res.api_secret })
+    token.value = { api_key: res.api_key, api_secret: res.api_secret }
     user.value = { name: res.user, full_name: res.full_name }
   }
 
@@ -57,6 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function logout(): void {
     clearStoredToken()
+    token.value = null
     user.value = null
     window.location.href = '/login'
   }
@@ -72,10 +75,12 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = { name: res.user, full_name: res.full_name ?? res.user }
       } else {
         clearStoredToken()
+        token.value = null
         user.value = null
       }
     } catch {
       clearStoredToken()
+      token.value = null
       user.value = null
     }
   }
