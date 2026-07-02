@@ -9,6 +9,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import Sidebar from './Sidebar.vue'
 import TopBar from './TopBar.vue'
 import type { SidebarNavItem, SidebarNavGroup } from './Sidebar.vue'
@@ -19,20 +20,12 @@ const router = useRouter()
 const { t } = useI18n()
 const appStore = useAppStore()
 
+const authStore = useAuthStore()
 const userName = ref('')
 
 onMounted(async () => {
-  try {
-    const res = await fetch('/api/method/frappe.auth.get_logged_user', {
-      credentials: 'include',
-    })
-    const data = await res.json()
-    if (data.message) {
-      userName.value = data.message
-    }
-  } catch {
-    // ignore — user info is cosmetic
-  }
+  await authStore.fetchCurrentUser()
+  userName.value = authStore.user?.full_name ?? authStore.user?.name ?? ''
 })
 
 /** Whether current route uses blank layout (no sidebar/topbar) */
