@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { onboardingGuard } from './guards/onboarding'
+import { useAuthStore } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -70,6 +71,16 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+// Auth gate — non-public routes require a stored token.
+// Runs before the onboarding guard so unauthenticated users never hit it.
+router.beforeEach((to) => {
+  if (to.meta.public) return
+  const authStore = useAuthStore()
+  if (!authStore.isAuthenticated) {
+    return { path: '/login' }
+  }
 })
 
 // Onboarding gate guard — blocks dashboard access until onboarding is complete.
